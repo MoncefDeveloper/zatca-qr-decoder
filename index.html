@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZATCA QR Code Decoder</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23grad)'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='50' font-family='system-ui'%3E🔍%3C/text%3E%3C/svg%3E">
     <style>
         * {
             margin: 0;
@@ -457,6 +458,14 @@
                 </div>
             </div>
         </div>
+        
+        <footer style="text-align: center; padding: 40px 20px; margin-top: 60px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <p style="color: #666; font-size: 0.9rem;">
+                Created with ❤️ by <strong style="color: #667eea;">
+                    <a href="https://moncefdev.me/" target="_blank">MoncefDev</a>
+                </strong>
+            </p>
+        </footer>
     </div>
 
     <script>
@@ -471,18 +480,18 @@
             }
 
             try {
-                
+                // Decode base64
                 const decodedBytes = atob(qrData);
                 const bytes = new Uint8Array(decodedBytes.length);
                 for (let i = 0; i < decodedBytes.length; i++) {
                     bytes[i] = decodedBytes.charCodeAt(i);
                 }
 
-                
+                // Parse TLV format
                 const fields = parseTLV(bytes);
                 displayResults(fields);
                 
-                
+                // Show results
                 emptyState.style.display = 'none';
                 resultContent.classList.add('active');
                 
@@ -495,7 +504,7 @@
             const fields = {};
             let index = 0;
 
-            
+            // ZATCA field mappings
             const fieldNames = {
                 1: 'Seller Name',
                 2: 'VAT Registration Number',
@@ -532,7 +541,7 @@
             
             let html = '<div class="field-grid">';
 
-            
+            // Display individual fields
             for (const [tag, field] of Object.entries(fields)) {
                 html += `
                     <div class="field-card">
@@ -544,7 +553,7 @@
 
             html += '</div>';
 
-            
+            // Add summary if we have key fields
             if (fields[1] && fields[4]) {
                 html += `
                     <div class="summary-card">
@@ -613,7 +622,7 @@
             resultContent.classList.add('active');
         }
 
-        
+        // Auto-decode on page load if there's default data
         window.addEventListener('load', function() {
             const input = document.getElementById('qrInput');
             if (input.value.trim()) {
@@ -621,7 +630,7 @@
             }
         });
 
-        
+        // Add input event listener for real-time validation
         document.getElementById('qrInput').addEventListener('input', function() {
             const resultContent = document.getElementById('resultContent');
             const emptyState = document.getElementById('emptyState');
