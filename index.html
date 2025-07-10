@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZATCA QR Code Decoder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .input-section {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .field {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+        .field-value {
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        .example {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .example-title {
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ZATCA QR Code Decoder</h1>
+        
+        <div class="input-section">
+            <label for="qrInput">Enter ZATCA QR Code Data:</label>
+            <input type="text" id="qrInput" placeholder="Paste your QR code data here..." value="AULZhdik2LPYs9ipINi32LHZgiDYp9mE2KfYqNiq2YPYp9ixINmE2YTYr9i52KfZitipINmI2KfZhNin2LnZhNin2YYCDzEwNTI0MDAwMTEzMzY0MgMZMjAyNS0wNy0xMFQwMjozODozOSswMDowMAQGNzg0Ljc0BQEw">
+            <button onclick="decodeQR()">Decode QR Code</button>
+        </div>
+
+        <div class="example">
+            <div class="example-title">How it works:</div>
+            ZATCA QR codes contain TLV (Tag-Length-Value) encoded data with tax invoice information including seller name, tax number, timestamp, total amount, and VAT amount.
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function decodeQR() {
+            const qrData = document.getElementById('qrInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!qrData) {
+                resultDiv.innerHTML = '<div class="error">Please enter QR code data</div>';
+                return;
+            }
+
+            try {
+                
+                const decodedBytes = atob(qrData);
+                const bytes = new Uint8Array(decodedBytes.length);
+                for (let i = 0; i < decodedBytes.length; i++) {
+                    bytes[i] = decodedBytes.charCodeAt(i);
+                }
+
+                
+                const fields = parseTLV(bytes);
+                displayResults(fields);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error decoding QR code: ${error.message}</div>`;
+            }
+        }
+
+        function parseTLV(bytes) {
+            const fields = {};
+            let index = 0;
+
+            
+            const fieldNames = {
+                1: 'Seller Name',
+                2: 'VAT Registration Number',
+                3: 'Timestamp',
+                4: 'Invoice Total (with VAT)',
+                5: 'VAT Amount'
+            };
+
+            while (index < bytes.length) {
+                if (index + 2 >= bytes.length) break;
+
+                const tag = bytes[index];
+                const length = bytes[index + 1];
+                
+                if (index + 2 + length > bytes.length) break;
+
+                const value = bytes.slice(index + 2, index + 2 + length);
+                const valueStr = new TextDecoder('utf-8').decode(value);
+                
+                fields[tag] = {
+                    name: fieldNames[tag] || `Field ${tag}`,
+                    value: valueStr,
+                    rawValue: Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ')
+                };
+
+                index += 2 + length;
+            }
+
+            return fields;
+        }
+
+        function displayResults(fields) {
+            const resultDiv = document.getElementById('result');
+            let html = '<div class="result"><h3>🎯 Decoded Information:</h3>';
+
+            for (const [tag, field] of Object.entries(fields)) {
+                html += `
+                    <div class="field">
+                        <div class="field-label">${field.name}:</div>
+                        <div class="field-value">${field.value}</div>
+                    </div>
+                `;
+            }
+
+            
+            if (fields[1] && fields[4]) {
+                html += `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.3);">
+                        <h4 style="color: #FFD700; margin-bottom: 10px;">📋 Invoice Summary:</h4>
+                        <div>Business: ${fields[1].value}</div>
+                        ${fields[2] ? `<div>VAT Number: ${fields[2].value}</div>` : ''}
+                        ${fields[3] ? `<div>Date: ${fields[3].value}</div>` : ''}
+                        <div>Total Amount: ${fields[4].value} SAR</div>
+                        ${fields[5] ? `<div>VAT Amount: ${fields[5].value} SAR</div>` : ''}
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        
+        window.onload = function() {
+            const input = document.getElementById('qrInput');
+            if (input.value.trim()) {
+                decodeQR();
+            }
+        };
+    </script>
+</body>
+</html>
