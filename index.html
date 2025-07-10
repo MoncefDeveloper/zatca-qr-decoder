@@ -5,134 +5,468 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZATCA QR Code Decoder</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        .input-section {
-            margin-bottom: 30px;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
-        button {
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 15px;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .input-field::placeholder {
+            color: #666;
+        }
+
+        .decode-button {
+            width: 100%;
+            padding: 18px 24px;
             font-size: 18px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 16px;
             cursor: pointer;
-            margin-top: 15px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        button:hover {
+
+        .decode-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
         }
-        .result {
-            margin-top: 30px;
+
+        .decode-button:active {
+            transform: translateY(0);
+        }
+
+        .result-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            min-height: 400px;
+        }
+
+        .result-content {
+            display: none;
+        }
+
+        .result-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .field-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
-        .field {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            border-left: 4px solid #4CAF50;
+
+        .field-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
         }
+
         .field-label {
-            font-weight: bold;
-            color: #FFD700;
-            margin-bottom: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
+
         .field-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
             word-break: break-all;
-            font-family: 'Courier New', monospace;
+            font-family: 'JetBrains Mono', monospace;
         }
-        .error {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 107, 107, 0.3);
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            margin-top: 24px;
         }
-        .example {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+
+        .summary-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .example-title {
-            font-weight: bold;
-            color: #FFD700;
-            margin-bottom: 10px;
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .info-card {
+            text-align: center;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 16px;
+        }
+
+        .info-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .info-card-text {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            background: rgba(255, 99, 99, 0.1);
+            border: 1px solid rgba(255, 99, 99, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            color: #ff9999;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     </style>
 </head>
 <body>
+    <div class="background"></div>
+    
     <div class="container">
-        <h1>🔍 ZATCA QR Code Decoder</h1>
-        
-        <div class="input-section">
-            <label for="qrInput">Enter ZATCA QR Code Data:</label>
-            <input type="text" id="qrInput" placeholder="Paste your QR code data here..." value="AULZhdik2LPYs9ipINi32LHZgiDYp9mE2KfYqNiq2YPYp9ixINmE2YTYr9i52KfZitipINmI2KfZhNin2LnZhNin2YYCDzEwNTI0MDAwMTEzMzY0MgMZMjAyNS0wNy0xMFQwMjozODozOSswMDowMAQGNzg0Ljc0BQEw">
-            <button onclick="decodeQR()">Decode QR Code</button>
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🔍</div>
+            </div>
+            <h1 class="title">ZATCA QR Decoder</h1>
+            <p class="subtitle">Professional Saudi Arabian tax invoice QR code decoder. Extract complete invoice information instantly with enterprise-grade accuracy.</p>
         </div>
 
-        <div class="example">
-            <div class="example-title">How it works:</div>
-            ZATCA QR codes contain TLV (Tag-Length-Value) encoded data with tax invoice information including seller name, tax number, timestamp, total amount, and VAT amount.
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">
+                    <div class="section-icon">📄</div>
+                    Input QR Code
+                </h2>
+                <div class="input-group">
+                    <label class="input-label" for="qrInput">Base64 Encoded QR Data</label>
+                    <textarea 
+                        id="qrInput" 
+                        class="input-field" 
+                        placeholder="Paste your ZATCA QR code data here..."
+                        spellcheck="false"
+                    >AULZhdik2LPYs9ipINi32LHZgiDYp9mE2KfYqNiq2YPYp9ixINmE2YTYr9i52KfZitipINmI2KfZhNin2LnZhNin2YYCDzEwNTI0MDAwMTEzMzY0MgMZMjAyNS0wNy0xMFQwMjozODozOSswMDowMAQGNzg0Ljc0BQEw</textarea>
+                </div>
+                <button class="decode-button" onclick="decodeQR()">
+                    <span>🚀</span>
+                    Decode QR Code
+                </button>
+            </div>
+
+            <div class="result-section">
+                <h2 class="section-title">
+                    <div class="section-icon">📊</div>
+                    Decoded Results
+                </h2>
+                
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-state-icon">⚡</div>
+                    <p>Enter your QR code data and click decode to see the results here</p>
+                </div>
+
+                <div id="resultContent" class="result-content">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
         </div>
 
-        <div id="result"></div>
+        <div class="info-section">
+            <h2 class="section-title">
+                <div class="section-icon">ℹ️</div>
+                How It Works
+            </h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-card-icon">🔐</div>
+                    <div class="info-card-title">Secure Processing</div>
+                    <div class="info-card-text">All decoding happens in your browser. Your data never leaves your device.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">⚡</div>
+                    <div class="info-card-title">Instant Results</div>
+                    <div class="info-card-text">Get complete invoice information in milliseconds with our optimized decoder.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">🎯</div>
+                    <div class="info-card-title">ZATCA Compliant</div>
+                    <div class="info-card-text">Fully compliant with Saudi Arabian tax authority QR code standards.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">🌐</div>
+                    <div class="info-card-title">Multi-Language</div>
+                    <div class="info-card-text">Supports Arabic and English text with proper UTF-8 encoding.</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         function decodeQR() {
             const qrData = document.getElementById('qrInput').value.trim();
-            const resultDiv = document.getElementById('result');
+            const emptyState = document.getElementById('emptyState');
+            const resultContent = document.getElementById('resultContent');
             
             if (!qrData) {
-                resultDiv.innerHTML = '<div class="error">Please enter QR code data</div>';
+                showError('Please enter QR code data');
                 return;
             }
 
@@ -147,8 +481,13 @@
                 
                 const fields = parseTLV(bytes);
                 displayResults(fields);
+                
+                
+                emptyState.style.display = 'none';
+                resultContent.classList.add('active');
+                
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">Error decoding QR code: ${error.message}</div>`;
+                showError(`Failed to decode QR code: ${error.message}`);
             }
         }
 
@@ -160,8 +499,8 @@
             const fieldNames = {
                 1: 'Seller Name',
                 2: 'VAT Registration Number',
-                3: 'Timestamp',
-                4: 'Invoice Total (with VAT)',
+                3: 'Invoice Timestamp',
+                4: 'Total Amount (Including VAT)',
                 5: 'VAT Amount'
             };
 
@@ -179,7 +518,7 @@
                 fields[tag] = {
                     name: fieldNames[tag] || `Field ${tag}`,
                     value: valueStr,
-                    rawValue: Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ')
+                    tag: tag
                 };
 
                 index += 2 + length;
@@ -189,43 +528,109 @@
         }
 
         function displayResults(fields) {
-            const resultDiv = document.getElementById('result');
-            let html = '<div class="result"><h3>🎯 Decoded Information:</h3>';
+            const resultContent = document.getElementById('resultContent');
+            
+            let html = '<div class="field-grid">';
 
+            
             for (const [tag, field] of Object.entries(fields)) {
                 html += `
-                    <div class="field">
-                        <div class="field-label">${field.name}:</div>
+                    <div class="field-card">
+                        <div class="field-label">${field.name}</div>
                         <div class="field-value">${field.value}</div>
                     </div>
                 `;
             }
 
+            html += '</div>';
+
             
             if (fields[1] && fields[4]) {
                 html += `
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.3);">
-                        <h4 style="color: #FFD700; margin-bottom: 10px;">📋 Invoice Summary:</h4>
-                        <div>Business: ${fields[1].value}</div>
-                        ${fields[2] ? `<div>VAT Number: ${fields[2].value}</div>` : ''}
-                        ${fields[3] ? `<div>Date: ${fields[3].value}</div>` : ''}
-                        <div>Total Amount: ${fields[4].value} SAR</div>
-                        ${fields[5] ? `<div>VAT Amount: ${fields[5].value} SAR</div>` : ''}
+                    <div class="summary-card">
+                        <div class="summary-title">
+                            📋 Invoice Summary
+                        </div>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="summary-label">Business Name</span>
+                                <span class="summary-value">${fields[1].value}</span>
+                            </div>
+                            ${fields[2] ? `
+                            <div class="summary-item">
+                                <span class="summary-label">VAT Number</span>
+                                <span class="summary-value">${fields[2].value}</span>
+                            </div>` : ''}
+                            ${fields[3] ? `
+                            <div class="summary-item">
+                                <span class="summary-label">Invoice Date</span>
+                                <span class="summary-value">${formatDate(fields[3].value)}</span>
+                            </div>` : ''}
+                            <div class="summary-item">
+                                <span class="summary-label">Total Amount</span>
+                                <span class="summary-value">${fields[4].value} SAR</span>
+                            </div>
+                            ${fields[5] ? `
+                            <div class="summary-item">
+                                <span class="summary-label">VAT Amount</span>
+                                <span class="summary-value">${fields[5].value} SAR</span>
+                            </div>` : ''}
+                        </div>
                     </div>
                 `;
             }
 
-            html += '</div>';
-            resultDiv.innerHTML = html;
+            resultContent.innerHTML = html;
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function showError(message) {
+            const emptyState = document.getElementById('emptyState');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContent.innerHTML = `
+                <div class="error-message">
+                    <div class="error-icon">⚠️</div>
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+            
+            emptyState.style.display = 'none';
+            resultContent.classList.add('active');
         }
 
         
-        window.onload = function() {
+        window.addEventListener('load', function() {
             const input = document.getElementById('qrInput');
             if (input.value.trim()) {
                 decodeQR();
             }
-        };
+        });
+
+        
+        document.getElementById('qrInput').addEventListener('input', function() {
+            const resultContent = document.getElementById('resultContent');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (!this.value.trim()) {
+                resultContent.classList.remove('active');
+                emptyState.style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html>
