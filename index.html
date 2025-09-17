@@ -1,648 +1,361 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZATCA QR Code Decoder</title>
-    <link rel="icon" type="image/svg+xml" href="moncefdev-logo.png">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        a{
-            color: inherit;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 60px;
-            position: relative;
-        }
-
-        .logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        }
-
-        .title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 16px;
-            line-height: 1.1;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #a0a0a0;
-            font-weight: 400;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 60px;
-        }
-
-        .input-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .input-group {
-            margin-bottom: 24px;
-        }
-
-        .input-label {
-            display: block;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #e0e0e0;
-            font-size: 0.95rem;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 16px 20px;
-            font-size: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: #667eea;
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-        }
-
-        .input-field::placeholder {
-            color: #666;
-        }
-
-        .decode-button {
-            width: 100%;
-            padding: 18px 24px;
-            font-size: 18px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .decode-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
-        }
-
-        .decode-button:active {
-            transform: translateY(0);
-        }
-
-        .result-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            min-height: 400px;
-        }
-
-        .result-content {
-            display: none;
-        }
-
-        .result-content.active {
-            display: block;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #666;
-            padding: 60px 20px;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .field-grid {
-            display: grid;
-            gap: 16px;
-        }
-
-        .field-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .field-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-        }
-
-        .field-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #a0a0a0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .field-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #ffffff;
-            word-break: break-all;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .summary-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            margin-top: 24px;
-        }
-
-        .summary-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-item:last-child {
-            border-bottom: none;
-        }
-
-        .summary-label {
-            font-size: 0.9rem;
-            color: #a0a0a0;
-        }
-
-        .summary-value {
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .info-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-        }
-
-        .info-card {
-            text-align: center;
-            padding: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .info-card-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin: 0 auto 16px;
-        }
-
-        .info-card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-
-        .info-card-text {
-            font-size: 0.9rem;
-            color: #a0a0a0;
-            line-height: 1.6;
-        }
-
-        .error-message {
-            background: rgba(255, 99, 99, 0.1);
-            border: 1px solid rgba(255, 99, 99, 0.3);
-            border-radius: 16px;
-            padding: 20px;
-            color: #ff9999;
-            text-align: center;
-        }
-
-        .error-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            
-            .title {
-                font-size: 2.5rem;
-            }
-            
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-    </style>
-</head>
-<body>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZATCA QR Decoder</title>
+    <link rel="icon" type="image/svg+xml" href="moncefdev-logo.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="background"></div>
-    
+
     <div class="container">
-        <div class="header">
-            <div class="logo">
-                <div class="logo-icon">🔍</div>
+      <div class="header">
+        <div class="header-controls">
+          <div class="tooltip">
+            <button class="control-btn" id="tutorialBtn" title="Tutorial">
+              <i class="fas fa-question"></i>
+            </button>
+            <span class="tooltiptext" data-i18n="tutorialTooltip"
+              >Interactive Tutorial</span
+            >
+          </div>
+          <div class="tooltip">
+            <button
+              class="control-btn"
+              id="shortcutsBtn"
+              title="Keyboard Shortcuts"
+            >
+              <i class="fas fa-cog"></i>
+            </button>
+            <span class="tooltiptext" data-i18n="shortcutsTooltip"
+              >Keyboard Shortcuts</span
+            >
+          </div>
+          <div class="tooltip">
+            <button class="control-btn" id="themeToggle" title="Toggle theme">
+              <i class="fas fa-moon"></i>
+            </button>
+            <span class="tooltiptext" data-i18n="themeTooltip"
+              >Toggle Theme</span
+            >
+          </div>
+          <div class="tooltip">
+            <div class="lang-dropdown">
+              <button
+                class="control-btn"
+                id="langToggle"
+                title="Toggle language"
+              >
+                <i class="fas fa-globe"></i>
+                <span class="lang-current">EN</span>
+              </button>
+              <div class="lang-menu" id="langMenu">
+                <div class="lang-option" data-lang="en">English</div>
+                <div class="lang-option" data-lang="ar">العربية</div>
+                <div class="lang-option" data-lang="fr">Français</div>
+              </div>
             </div>
-            <h1 class="title">ZATCA QR Decoder</h1>
-            <p class="subtitle">Professional Saudi Arabian tax invoice QR code decoder. Extract complete invoice information instantly with enterprise-grade accuracy.</p>
+            <span class="tooltiptext" data-i18n="langTooltip"
+              >Toggle Language</span
+            >
+          </div>
+        </div>
+        <div class="logo">
+          <div class="logo-icon">🔍</div>
+        </div>
+        <h1 class="title" data-i18n="title">ZATCA QR Decoder</h1>
+        <p class="subtitle" data-i18n="subtitle">
+          Professional Saudi Arabian tax invoice QR code decoder. Extract
+          complete invoice information instantly with enterprise-grade accuracy.
+        </p>
+      </div>
+
+      <!-- History Section -->
+      <div class="history-section" id="historySection">
+        <h2 class="section-title">
+          <div class="section-icon">📚</div>
+          <span data-i18n="historyTitle">Recent Decodes</span>
+        </h2>
+        <div id="historyList">
+          <p class="empty-state" data-i18n="historyEmpty">
+            No recent decodes yet
+          </p>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="input-section">
+          <h2 class="section-title">
+            <div class="section-icon">📄</div>
+            <span data-i18n="inputTitle">Input QR Code</span>
+          </h2>
+
+          <!-- Upload section -->
+          <div class="input-group">
+            <label class="input-label" data-i18n="uploadLabel"
+              >Upload QR Code Image</label
+            >
+            <div class="upload-container">
+              <input
+                type="file"
+                id="qrImageUpload"
+                accept="image/*"
+                style="display: none"
+                multiple
+              />
+              <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text" data-i18n="uploadText">
+                  Click or drag QR image here
+                </div>
+                <div class="upload-subtext" data-i18n="uploadSubtext">
+                  Supports JPG, PNG, WebP
+                </div>
+              </div>
+              <div
+                class="upload-preview"
+                id="uploadPreview"
+                style="display: none"
+              >
+                <img id="previewImg" src="" alt="QR Preview" />
+                <button class="remove-btn" id="removeImage">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" data-i18n="inputLabel"
+              >Base64 Encoded QR Data</label
+            >
+            <textarea
+              id="qrInput"
+              class="input-field"
+              data-i18n-placeholder="inputPlaceholder"
+              placeholder="Paste your ZATCA QR code data here..."
+              spellcheck="false"
+            >
+AQpNb25jZWYgRGV2CgAxMjM0NTY3ODkwEzIwMjMtMDEtMDFUMTI6MDA6MDAEBjEwMC4wMAUEMTUuMDA=</textarea
+            >
+          </div>
+
+          <button class="decode-button" onclick="decodeQR()">
+            <span>🚀</span>
+            <span data-i18n="decodeButton">Decode QR Code</span>
+          </button>
         </div>
 
-        <div class="main-content">
-            <div class="input-section">
-                <h2 class="section-title">
-                    <div class="section-icon">📄</div>
-                    Input QR Code
-                </h2>
-                <div class="input-group">
-                    <label class="input-label" for="qrInput">Base64 Encoded QR Data</label>
-                    <textarea 
-                        id="qrInput" 
-                        class="input-field" 
-                        placeholder="Paste your ZATCA QR code data here..."
-                        spellcheck="false"
-                    >AULZhdik2LPYs9ipINi32LHZgiDYp9mE2KfYqNiq2YPYp9ixINmE2YTYr9i52KfZitipINmI2KfZhNin2LnZhNin2YYCDzEwNTI0MDAwMTEzMzY0MgMZMjAyNS0wNy0xMFQwMjozODozOSswMDowMAQGNzg0Ljc0BQEw</textarea>
-                </div>
-                <button class="decode-button" onclick="decodeQR()">
-                    <span>🚀</span>
-                    Decode QR Code
-                </button>
-            </div>
+        <div class="result-section">
+          <h2 class="section-title">
+            <div class="section-icon">📊</div>
+            <span data-i18n="resultsTitle">Decoded Results</span>
+          </h2>
 
-            <div class="result-section">
-                <h2 class="section-title">
-                    <div class="section-icon">📊</div>
-                    Decoded Results
-                </h2>
-                
-                <div id="emptyState" class="empty-state">
-                    <div class="empty-state-icon">⚡</div>
-                    <p>Enter your QR code data and click decode to see the results here</p>
-                </div>
-
-                <div id="resultContent" class="result-content">
-                    <!-- Results will be populated here -->
-                </div>
-            </div>
-        </div>
-
-        <div class="info-section">
-            <h2 class="section-title">
-                <div class="section-icon">ℹ️</div>
-                How It Works
-            </h2>
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-card-icon">🔐</div>
-                    <div class="info-card-title">Secure Processing</div>
-                    <div class="info-card-text">All decoding happens in your browser. Your data never leaves your device.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">⚡</div>
-                    <div class="info-card-title">Instant Results</div>
-                    <div class="info-card-text">Get complete invoice information in milliseconds with our optimized decoder.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🎯</div>
-                    <div class="info-card-title">ZATCA Compliant</div>
-                    <div class="info-card-text">Fully compliant with Saudi Arabian tax authority QR code standards.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🌐</div>
-                    <div class="info-card-title">Multi-Language</div>
-                    <div class="info-card-text">Supports Arabic and English text with proper UTF-8 encoding.</div>
-                </div>
-            </div>
-        </div>
-        
-        <footer style="text-align: center; padding: 40px 20px; margin-top: 60px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-            <p style="color: #666; font-size: 0.9rem;">
-                Created with ❤️ by <strong style="color: #667eea;">
-                    <a href="https://moncefdev.me/" target="_blank">MoncefDev</a>
-                </strong>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-state-icon">⚡</div>
+            <p data-i18n="emptyState">
+              Enter your QR code data and click decode to see the results here
             </p>
-        </footer>
+          </div>
+
+          <div id="loadingState" class="loading">
+            <div class="spinner"></div>
+          </div>
+
+          <div id="skeletonState" class="skeleton-state" style="display: none">
+            <div class="skeleton skeleton-field"></div>
+            <div class="skeleton skeleton-field"></div>
+            <div class="skeleton skeleton-field"></div>
+          </div>
+
+          <div id="resultContent" class="result-content">
+            <!-- Results will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h2 class="section-title">
+          <div class="section-icon">ℹ️</div>
+          <span data-i18n="howItWorks">How It Works</span>
+        </h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-icon">🔐</div>
+            <div class="info-card-title" data-i18n="secureProcessing">
+              Secure Processing
+            </div>
+            <div class="info-card-text" data-i18n="secureProcessingText">
+              All decoding happens in your browser. Your data never leaves your
+              device.
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">⚡</div>
+            <div class="info-card-title" data-i18n="instantResults">
+              Instant Results
+            </div>
+            <div class="info-card-text" data-i18n="instantResultsText">
+              Get complete invoice information in milliseconds with our
+              optimized decoder.
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">🎯</div>
+            <div class="info-card-title" data-i18n="zatcaCompliant">
+              ZATCA Compliant
+            </div>
+            <div class="info-card-text" data-i18n="zatcaCompliantText">
+              Fully compliant with Saudi Arabian tax authority QR code
+              standards.
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon">🌐</div>
+            <div class="info-card-title" data-i18n="multiLanguage">
+              Multi-Language
+            </div>
+            <div class="info-card-text" data-i18n="multiLanguageText">
+              Supports Arabic, English, and French text with proper UTF-8
+              encoding.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer
+        style="
+          text-align: center;
+          padding: 40px 20px;
+          margin-top: 60px;
+          border-top: 1px solid var(--border-color);
+        "
+      >
+        <p style="color: var(--text-secondary); font-size: 0.9rem">
+          <span data-i18n="footer">Created with ❤️ by</span>
+          <strong style="color: #667eea">
+            <a href="https://moncefdev.me/" target="_blank">MoncefDev</a>
+          </strong>
+        </p>
+      </footer>
     </div>
 
-    <script>
-        function decodeQR() {
-            const qrData = document.getElementById('qrInput').value.trim();
-            const emptyState = document.getElementById('emptyState');
-            const resultContent = document.getElementById('resultContent');
-            
-            if (!qrData) {
-                showError('Please enter QR code data');
-                return;
-            }
+    <!-- Tutorial Modal -->
+    <div class="tutorial-modal" id="tutorialModal">
+      <div class="tutorial-content">
+        <button class="tutorial-close" id="tutorialClose">✕</button>
+        <h2 data-i18n="tutorialTitle">Welcome to ZATCA QR Decoder</h2>
+        <div id="tutorialSteps">
+          <div class="tutorial-step" data-step="0">
+            <h3 data-i18n="tutorialStep1Title">Getting Started</h3>
+            <p data-i18n="tutorialStep1Text">
+              This tool helps you decode ZATCA QR codes from Saudi Arabian tax
+              invoices. You can either upload an image or paste the Base64
+              encoded data directly.
+            </p>
+          </div>
+          <div class="tutorial-step" data-step="1">
+            <h3 data-i18n="tutorialStep2Title">Upload QR Image</h3>
+            <p data-i18n="tutorialStep2Text">
+              Click or drag your QR code image to the upload area. Supported
+              formats include JPG, PNG, and WebP.
+            </p>
+          </div>
+          <div class="tutorial-step" data-step="2">
+            <h3 data-i18n="tutorialStep3Title">Enter Base64 Data</h3>
+            <p data-i18n="tutorialStep3Text">
+              Alternatively, paste the Base64 encoded QR data directly into the
+              text area.
+            </p>
+          </div>
+          <div class="tutorial-step" data-step="3">
+            <h3 data-i18n="tutorialStep4Title">Decode & Export</h3>
+            <p data-i18n="tutorialStep4Text">
+              Click "Decode QR Code" to extract the information. You can copy
+              individual fields or export the entire result.
+            </p>
+          </div>
+          <div class="tutorial-step" data-step="4">
+            <h3 data-i18n="tutorialStep5Title">Keyboard Shortcuts</h3>
+            <p data-i18n="tutorialStep5Text">
+              Use Ctrl+K to focus the input field and Ctrl+Enter to decode
+              quickly.
+            </p>
+          </div>
+        </div>
+        <div class="tutorial-navigation">
+          <button
+            class="tutorial-nav-btn"
+            id="tutorialPrev"
+            data-i18n="tutorialPrev"
+          >
+            Previous
+          </button>
+          <button
+            class="tutorial-nav-btn"
+            id="tutorialNext"
+            data-i18n="tutorialNext"
+          >
+            Next
+          </button>
+          <button
+            class="tutorial-nav-btn"
+            id="tutorialConfirm"
+            style="display: none"
+            data-i18n="tutorialConfirm"
+          >
+            Got it!
+          </button>
+        </div>
+        <div class="tutorial-dots" id="tutorialDots"></div>
+      </div>
+    </div>
 
-            try {
-                // Decode base64
-                const decodedBytes = atob(qrData);
-                const bytes = new Uint8Array(decodedBytes.length);
-                for (let i = 0; i < decodedBytes.length; i++) {
-                    bytes[i] = decodedBytes.charCodeAt(i);
-                }
+    <div class="shortcuts-modal" id="shortcutsModal">
+      <div class="shortcuts-content">
+        <button class="shortcuts-close" id="shortcutsClose">✕</button>
+        <h2 data-i18n="shortcutsTitle">Keyboard Shortcuts</h2>
+        <div class="shortcuts-list">
+          <div class="shortcut-item">
+            <div class="shortcut-keys">
+              <span class="shortcut-key">Ctrl</span>
+              <span class="shortcut-plus">+</span>
+              <span class="shortcut-key">K</span>
+            </div>
+            <div class="shortcut-desc" data-i18n="shortcutFocus">
+              Focus Input
+            </div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys">
+              <span class="shortcut-key">Ctrl</span>
+              <span class="shortcut-plus">+</span>
+              <span class="shortcut-key">Enter</span>
+            </div>
+            <div class="shortcut-desc" data-i18n="shortcutDecode">Decode</div>
+          </div>
+        </div>
+        <div class="shortcuts-note" data-i18n="shortcutsNote">
+          These shortcuts work anywhere in the application
+        </div>
+      </div>
+    </div>
 
-                // Parse TLV format
-                const fields = parseTLV(bytes);
-                displayResults(fields);
-                
-                // Show results
-                emptyState.style.display = 'none';
-                resultContent.classList.add('active');
-                
-            } catch (error) {
-                showError(`Failed to decode QR code: ${error.message}`);
-            }
-        }
+    <!-- Success Animation -->
+    <div class="success-animation" id="successAnimation">✓</div>
 
-        function parseTLV(bytes) {
-            const fields = {};
-            let index = 0;
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
-            // ZATCA field mappings
-            const fieldNames = {
-                1: 'Seller Name',
-                2: 'VAT Registration Number',
-                3: 'Invoice Timestamp',
-                4: 'Total Amount (Including VAT)',
-                5: 'VAT Amount'
-            };
-
-            while (index < bytes.length) {
-                if (index + 2 >= bytes.length) break;
-
-                const tag = bytes[index];
-                const length = bytes[index + 1];
-                
-                if (index + 2 + length > bytes.length) break;
-
-                const value = bytes.slice(index + 2, index + 2 + length);
-                const valueStr = new TextDecoder('utf-8').decode(value);
-                
-                fields[tag] = {
-                    name: fieldNames[tag] || `Field ${tag}`,
-                    value: valueStr,
-                    tag: tag
-                };
-
-                index += 2 + length;
-            }
-
-            return fields;
-        }
-
-        function displayResults(fields) {
-            const resultContent = document.getElementById('resultContent');
-            
-            let html = '<div class="field-grid">';
-
-            // Display individual fields
-            for (const [tag, field] of Object.entries(fields)) {
-                html += `
-                    <div class="field-card">
-                        <div class="field-label">${field.name}</div>
-                        <div class="field-value">${field.value}</div>
-                    </div>
-                `;
-            }
-
-            html += '</div>';
-
-            // Add summary if we have key fields
-            if (fields[1] && fields[4]) {
-                html += `
-                    <div class="summary-card">
-                        <div class="summary-title">
-                            📋 Invoice Summary
-                        </div>
-                        <div class="summary-grid">
-                            <div class="summary-item">
-                                <span class="summary-label">Business Name</span>
-                                <span class="summary-value">${fields[1].value}</span>
-                            </div>
-                            ${fields[2] ? `
-                            <div class="summary-item">
-                                <span class="summary-label">VAT Number</span>
-                                <span class="summary-value">${fields[2].value}</span>
-                            </div>` : ''}
-                            ${fields[3] ? `
-                            <div class="summary-item">
-                                <span class="summary-label">Invoice Date</span>
-                                <span class="summary-value">${formatDate(fields[3].value)}</span>
-                            </div>` : ''}
-                            <div class="summary-item">
-                                <span class="summary-label">Total Amount</span>
-                                <span class="summary-value">${fields[4].value} SAR</span>
-                            </div>
-                            ${fields[5] ? `
-                            <div class="summary-item">
-                                <span class="summary-label">VAT Amount</span>
-                                <span class="summary-value">${fields[5].value} SAR</span>
-                            </div>` : ''}
-                        </div>
-                    </div>
-                `;
-            }
-
-            resultContent.innerHTML = html;
-        }
-
-        function formatDate(dateString) {
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (e) {
-                return dateString;
-            }
-        }
-
-        function showError(message) {
-            const emptyState = document.getElementById('emptyState');
-            const resultContent = document.getElementById('resultContent');
-            
-            resultContent.innerHTML = `
-                <div class="error-message">
-                    <div class="error-icon">⚠️</div>
-                    <strong>Error:</strong> ${message}
-                </div>
-            `;
-            
-            emptyState.style.display = 'none';
-            resultContent.classList.add('active');
-        }
-
-        // Auto-decode on page load if there's default data
-        window.addEventListener('load', function() {
-            const input = document.getElementById('qrInput');
-            if (input.value.trim()) {
-                decodeQR();
-            }
-        });
-
-        // Add input event listener for real-time validation
-        document.getElementById('qrInput').addEventListener('input', function() {
-            const resultContent = document.getElementById('resultContent');
-            const emptyState = document.getElementById('emptyState');
-            
-            if (!this.value.trim()) {
-                resultContent.classList.remove('active');
-                emptyState.style.display = 'block';
-            }
-        });
-    </script>
-</body>
+    <!-- Our Scripts -->
+    <script src="js/translations.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>
