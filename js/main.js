@@ -29,10 +29,7 @@ function updateLangButton() {
     fr: "FR",
   };
 
-  langToggle.innerHTML = `
-        <i class="fas fa-globe"></i>
-        <span class="lang-current">${langCodes[currentLang]}</span>
-    `;
+  langToggle.innerHTML = `<i class="fas fa-globe"></i> <span class="lang-current">${langCodes[currentLang]}</span>`;
 }
 
 if (typeof pdfMake !== "undefined") {
@@ -299,20 +296,13 @@ function updateHistoryDisplay() {
   } else {
     historyList.innerHTML = history
       .map(
-        (item, index) => `
-            <div class="history-item" onclick="loadFromHistory(${index})">
-                <div>
-                    <div class="history-date">${formatDate(
-                      item.timestamp
-                    )}</div>
-                    <div class="history-data">${item.data.substring(
-                      0,
-                      50
-                    )}...</div>
-                </div>
-                <button class="remove-btn" onclick="removeFromHistory(${index}, event)">✕</button>
-            </div>
-        `
+        (item, index) => `<div class="history-item" onclick="loadFromHistory(${index})">
+        <div>
+          <div class="history-date">${formatDate(item.timestamp)}</div>
+          <div class="history-data">${item.data.substring(0, 50)}...</div>
+        </div>
+        <button class="remove-btn" onclick="removeFromHistory(${index}, event)">✕</button>
+      </div>`
       )
       .join("");
   }
@@ -414,50 +404,260 @@ function initializeUpload() {
     };
     reader.readAsDataURL(file);
   }
+}
 
-  // Process QR code from image
-  function processQRCode(imageSrc) {
-    const img = new Image();
-    img.onload = function () {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+// Improved QR code processing with multiple preprocessing steps
+// Replace ONLY your processQRCode function with this simplified version
+// Simple fix for your processQRCode function
+function processQRCode(imageSrc) {
+  const img = new Image();
+  img.onload = function () {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-      // Set canvas dimensions to match image
-      canvas.width = img.width;
-      canvas.height = img.height;
+    // Set canvas dimensions to match image
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-      // Draw image on canvas
+    // First, draw the image in grayscale
+    ctx.filter = 'grayscale(100%) contrast(200%)';
+    ctx.drawImage(img, 0, 0);
+
+    // Get image data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    // Check if jsQR is available
+    if (typeof jsQR === "undefined") {
+      showError(
+        translations[currentLang].errorLibraryNotLoaded ||
+          "QR scanner library not loaded"
+      );
+      return;
+    }
+
+    // Try to decode QR code
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code) {
+      // Set decoded data to textarea
+      qrInput.value = code.data;
+      // Auto-decode
+      decodeQR();
+    } else {
+      // Try again with the original image
+      ctx.filter = 'none';
       ctx.drawImage(img, 0, 0);
-
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Check if jsQR is available
-      if (typeof jsQR === "undefined") {
-        showError(
-          translations[currentLang].errorLibraryNotLoaded ||
-            "QR scanner library not loaded"
-        );
-        return;
-      }
-
-      // Decode QR code
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-      if (code) {
-        // Set decoded data to textarea
-        qrInput.value = code.data;
-        // Auto-decode
+      const originalData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const originalCode = jsQR(originalData.data, originalData.width, originalData.height);
+      
+      if (originalCode) {
+        qrInput.value = originalCode.data;
         decodeQR();
       } else {
         showError(
           translations[currentLang].errorNoQRFound ||
-            "No QR code found in the image"
+            "No QR code found in the image. Try using a clearer image with higher contrast."
         );
       }
-    };
-    img.src = imageSrc;
+    }
+  };
+  img.src = imageSrc;
+}
+
+// Add this function to handle colored QR codes
+function preprocessForColoredQR(imageData) {
+  const data = imageData.data;
+  
+  // Convert to grayscale with enhanced contrast for colored QR codes
+  for (let i = 0; i < data.length; i += 4) {
+    // Calculate grayscale value with emphasis on blue-purple colors
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    
+    // For blue-purple QR codes, we need to enhance the contrast
+    // This formula gives more weight to blue and less to red
+    const gray = r * 0.2 + g * 0.3 + b * 0.5;
+    
+    // Apply aggressive threshold to create binary image
+    const threshold = 120; // Adjust this value if needed
+    const value = gray > threshold ? 255 : 0;
+    
+    // Set RGB values to the binary value
+    data[i] = value;     // Red
+    data[i + 1] = value; // Green
+    data[i + 2] = value; // Blue
+    // Alpha channel remains unchanged
   }
+  
+  return imageData;
+}
+// Clone image data for processing
+function cloneImageData(imageData) {
+  const canvas = document.createElement("canvas");
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  const ctx = canvas.getContext("2d");
+  return ctx.createImageData(imageData);
+}
+
+// Try decoding with QRCodeReader library
+function tryDecodeWithQRCodeReader(imageData) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    const ctx = canvas.getContext("2d");
+    ctx.putImageData(imageData, 0, 0);
+    
+    const qrReader = new QRCodeReader();
+    const result = qrReader.decode({ data: canvas.toDataURL() });
+    return result ? result.result : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Preprocessing functions
+
+// Function to preprocess image for better QR detection
+function preprocessImage(imageData) {
+  const data = imageData.data;
+  
+  // Convert to grayscale and enhance contrast
+  for (let i = 0; i < data.length; i += 4) {
+    // Calculate grayscale value
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    
+    // Apply threshold to create binary image
+    const threshold = 128;
+    const value = gray > threshold ? 255 : 0;
+    
+    // Set RGB values to the binary value
+    data[i] = value;     // Red
+    data[i + 1] = value; // Green
+    data[i + 2] = value; // Blue
+    // Alpha channel remains unchanged
+  }
+  
+  return imageData;
+}
+
+// Function to enhance contrast
+function enhanceContrast(imageData) {
+  const data = imageData.data;
+  const factor = 2; // Contrast factor
+  
+  for (let i = 0; i < data.length; i += 4) {
+    // Apply contrast enhancement
+    data[i] = factor * (data[i] - 128) + 128;     // Red
+    data[i + 1] = factor * (data[i + 1] - 128) + 128; // Green
+    data[i + 2] = factor * (data[i + 2] - 128) + 128; // Blue
+    
+    // Clamp values to 0-255 range
+    data[i] = Math.max(0, Math.min(255, data[i]));
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1]));
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2]));
+  }
+  
+  return imageData;
+}
+
+// Function to convert to grayscale
+function convertToGrayscale(imageData) {
+  const data = imageData.data;
+  
+  for (let i = 0; i < data.length; i += 4) {
+    // Calculate grayscale value
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    
+    // Set RGB values to the grayscale value
+    data[i] = gray;     // Red
+    data[i + 1] = gray; // Green
+    data[i + 2] = gray; // Blue
+    // Alpha channel remains unchanged
+  }
+  
+  return imageData;
+}
+
+// Adaptive threshold function
+function adaptiveThreshold(imageData) {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  const blockSize = 15;
+  const C = 2;
+  
+  // First convert to grayscale
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    data[i] = gray;
+    data[i + 1] = gray;
+    data[i + 2] = gray;
+  }
+  
+  // Apply adaptive threshold
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      
+      // Calculate local threshold
+      let sum = 0;
+      let count = 0;
+      const halfBlock = Math.floor(blockSize / 2);
+      
+      for (let dy = -halfBlock; dy <= halfBlock; dy++) {
+        for (let dx = -halfBlock; dx <= halfBlock; dx++) {
+          const ny = y + dy;
+          const nx = x + dx;
+          
+          if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+            const nidx = (ny * width + nx) * 4;
+            sum += data[nidx];
+            count++;
+          }
+        }
+      }
+      
+      const threshold = (sum / count) - C;
+      const value = data[idx] > threshold ? 255 : 0;
+      
+      data[idx] = value;
+      data[idx + 1] = value;
+      data[idx + 2] = value;
+    }
+  }
+  
+  return imageData;
+}
+
+// Normalize image function
+function normalizeImage(imageData) {
+  const data = imageData.data;
+  
+  // Find min and max values
+  let min = 255;
+  let max = 0;
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    min = Math.min(min, gray);
+    max = Math.max(max, gray);
+  }
+  
+  // Normalize and convert to grayscale
+  const range = max - min;
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    const normalized = ((gray - min) / range) * 255;
+    
+    data[i] = normalized;
+    data[i + 1] = normalized;
+    data[i + 2] = normalized;
+  }
+  
+  return imageData;
 }
 
 function decodeQR(addToHistoryFlag = true) {
@@ -534,97 +734,64 @@ function displayResults(fields) {
 
   // Display individual fields
   for (const [tag, field] of Object.entries(fields)) {
-    html += `
-            <div class="field-card" style="animation-delay: ${tag * 0.1}s">
-                <div class="field-label">${field.name}</div>
-                <div class="field-value">
-                    <span>${field.value}</span>
-                    <button class="copy-btn" onclick="copyToClipboard('${field.value.replace(
-                      /'/g,
-                      "\\'"
-                    )}', this)">📋</button>
-                </div>
-            </div>
-        `;
+    html += `<div class="field-card" style="animation-delay: ${tag * 0.1}s">
+      <div class="field-label">${field.name}</div>
+      <div class="field-value">
+        <span>${field.value}</span>
+        <button class="copy-btn" onclick="copyToClipboard('${field.value.replace(/'/g, "\\'")}', this)">📋</button>
+      </div>
+    </div>`;
   }
 
   html += "</div>";
 
   // Add summary if we have key fields
   if (fields[1] && fields[4]) {
-    html += `
-            <div class="summary-card">
-                <div class="summary-title">
-                    📋 ${translations[currentLang].invoiceSummary}
-                </div>
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <span class="summary-label">${
-                          translations[currentLang].businessName
-                        }</span>
-                        <span class="summary-value">${fields[1].value}</span>
-                    </div>
-                    ${
-                      fields[2]
-                        ? `
-                    <div class="summary-item">
-                        <span class="summary-label">${translations[currentLang].vatNumber}</span>
-                        <span class="summary-value">${fields[2].value}</span>
-                    </div>`
-                        : ""
-                    }
-                    ${
-                      fields[3]
-                        ? `
-                    <div class="summary-item">
-                        <span class="summary-label">${
-                          translations[currentLang].invoiceDate
-                        }</span>
-                        <span class="summary-value">${formatDate(
-                          fields[3].value
-                        )}</span>
-                    </div>`
-                        : ""
-                    }
-                    <div class="summary-item">
-                        <span class="summary-label">${
-                          translations[currentLang].totalAmount
-                        }</span>
-                        <span class="summary-value">${
-                          fields[4].value
-                        } SAR</span>
-                    </div>
-                    ${
-                      fields[5]
-                        ? `
-                    <div class="summary-item">
-                        <span class="summary-label">${translations[currentLang].vatAmount}</span>
-                        <span class="summary-value">${fields[5].value} SAR</span>
-                    </div>`
-                        : ""
-                    }
-                </div>
-            </div>
-        `;
+    html += `<div class="summary-card">
+      <div class="summary-title">📋 ${translations[currentLang].invoiceSummary}</div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">${translations[currentLang].businessName}</span>
+          <span class="summary-value">${fields[1].value}</span>
+        </div>
+        ${fields[2] ? `
+        <div class="summary-item">
+          <span class="summary-label">${translations[currentLang].vatNumber}</span>
+          <span class="summary-value">${fields[2].value}</span>
+        </div>` : ""}
+        ${fields[3] ? `
+        <div class="summary-item">
+          <span class="summary-label">${translations[currentLang].invoiceDate}</span>
+          <span class="summary-value">${formatDate(fields[3].value)}</span>
+        </div>` : ""}
+        <div class="summary-item">
+          <span class="summary-label">${translations[currentLang].totalAmount}</span>
+          <span class="summary-value">${fields[4].value} SAR</span>
+        </div>
+        ${fields[5] ? `
+        <div class="summary-item">
+          <span class="summary-label">${translations[currentLang].vatAmount}</span>
+          <span class="summary-value">${fields[5].value} SAR</span>
+        </div>` : ""}
+      </div>
+    </div>`;
   }
 
   // Add export buttons
-  html += `
-        <div class="export-buttons">
-            <button class="export-btn" onclick="exportToPDF()">
-                <i class="fas fa-file-pdf"></i>
-                <span>${translations[currentLang].exportPDF}</span>
-            </button>
-            <button class="export-btn" onclick="exportToCSV()">
-                <i class="fas fa-file-csv"></i>
-                <span>${translations[currentLang].exportCSV}</span>
-            </button>
-            <button class="export-btn" onclick="exportToJSON()">
-                <i class="fas fa-file-code"></i>
-                <span>${translations[currentLang].exportJSON}</span>
-            </button>
-        </div>
-    `;
+  html += `<div class="export-buttons">
+    <button class="export-btn" onclick="exportToPDF()">
+      <i class="fas fa-file-pdf"></i>
+      <span>${translations[currentLang].exportPDF}</span>
+    </button>
+    <button class="export-btn" onclick="exportToCSV()">
+      <i class="fas fa-file-csv"></i>
+      <span>${translations[currentLang].exportCSV}</span>
+    </button>
+    <button class="export-btn" onclick="exportToJSON()">
+      <i class="fas fa-file-code"></i>
+      <span>${translations[currentLang].exportJSON}</span>
+    </button>
+  </div>`;
 
   resultContent.innerHTML = html;
 }
@@ -703,7 +870,7 @@ function exportToPDF() {
     showError("Failed to export PDF: " + error.message);
   }
 }
-// Update the exportToCSV function one more time
+
 function exportToCSV() {
   try {
     const qrData = document.getElementById("qrInput").value.trim();
@@ -786,3 +953,207 @@ document.getElementById("qrInput").addEventListener("input", function () {
     emptyState.style.display = "block";
   }
 });
+
+// Utility functions
+
+// Load script dynamically with fallback
+function loadScript(src, callback) {
+  const script = document.createElement("script");
+  script.src = src;
+  script.onload = callback;
+  script.onerror = function () {
+    console.error("Failed to load script:", src);
+    
+    // If jsQR fails, try an alternative library
+    if (src.includes("jsqr")) {
+      console.log("Trying alternative QR library...");
+      loadScript("https://cdn.jsdelivr.net/npm/qrcode-reader@1.0.4/dist/qrcode-reader.min.js", function() {
+        console.log("Alternative QR library loaded");
+        callback();
+      });
+    } else {
+      showError(
+        translations[currentLang].errorLoadingLibrary ||
+          "Failed to load QR scanner library"
+      );
+    }
+  };
+  document.head.appendChild(script);
+}
+
+// Create BOM for UTF-8 CSV files
+function addBOM(text) {
+  return "\uFEFF" + text;
+}
+
+// Check if text contains Arabic characters
+function isArabic(text) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+// Format text for CSV with proper escaping
+function formatCSVText(text) {
+  if (isArabic(text)) {
+    // For Arabic text, we need to ensure proper encoding
+    return text.replace(/"/g, '""');
+  }
+  return text.replace(/"/g, '""');
+}
+
+// Format date based on current language
+function formatDate(dateString) {
+  try {
+    const date = new Date(dateString);
+    const options =
+      currentLang === "ar"
+        ? {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            calendar: "gregory",
+          }
+        : currentLang === "fr"
+        ? {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        : {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          };
+
+    return date.toLocaleDateString(
+      currentLang === "ar" ? "ar-SA" : currentLang === "fr" ? "fr-FR" : "en-US",
+      options
+    );
+  } catch (e) {
+    return dateString;
+  }
+}
+
+// Copy text to clipboard
+function copyToClipboard(text, button) {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      // Visual feedback
+      button.classList.add("copied");
+      button.innerHTML = "✓";
+
+      // Show toast notification
+      showToast(translations[currentLang].copySuccess);
+
+      // Reset after 2 seconds
+      setTimeout(() => {
+        button.classList.remove("copied");
+        button.innerHTML = "📋";
+      }, 2000);
+    })
+    .catch((err) => {
+      console.error("Failed to copy: ", err);
+    });
+}
+
+// Show success animation
+function showSuccessAnimation() {
+  const successAnimation = document.getElementById("successAnimation");
+  successAnimation.classList.add("show");
+  setTimeout(() => {
+    successAnimation.classList.remove("show");
+  }, 1000);
+
+  // Show toast notification
+  showToast(translations[currentLang].decodeSuccess);
+}
+
+// Show toast notification
+function showToast(message, isError = false) {
+  const toast = document.createElement("div");
+  toast.className = isError ? "toast error" : "toast";
+  toast.innerHTML = `<i class="fas ${isError ? "fa-exclamation-circle" : "fa-check-circle"}"></i>
+    <span>${message}</span>`;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = "slideOutRight 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Show error message
+function showError(message) {
+  const emptyState = document.getElementById("emptyState");
+  const resultContent = document.getElementById("resultContent");
+  const loadingState = document.getElementById("loadingState");
+  const skeletonState = document.getElementById("skeletonState");
+
+  loadingState.classList.remove("active");
+  skeletonState.style.display = "none";
+  resultContent.innerHTML = `<div class="error-message">
+    <div class="error-icon">⚠️</div>
+    <strong>${translations[currentLang].error || "Error"}:</strong> ${message}
+  </div>`;
+
+  emptyState.style.display = "none";
+  resultContent.classList.add("active");
+}
+
+// Parse TLV format with error handling
+function parseTLV(bytes) {
+  try {
+    // If bytes is a string (from export functions), convert it to Uint8Array
+    if (typeof bytes === "string") {
+      const decodedBytes = atob(bytes);
+      const byteArray = new Uint8Array(decodedBytes.length);
+      for (let i = 0; i < decodedBytes.length; i++) {
+        byteArray[i] = decodedBytes.charCodeAt(i);
+      }
+      bytes = byteArray;
+    }
+
+    const fields = {};
+    let index = 0;
+
+    // ZATCA field mappings
+    const fieldNames = {
+      1: translations[currentLang].sellerName,
+      2: translations[currentLang].vatNumber,
+      3: translations[currentLang].invoiceTimestamp,
+      4: translations[currentLang].totalAmount,
+      5: translations[currentLang].vatAmount,
+    };
+
+    while (index < bytes.length) {
+      if (index + 2 >= bytes.length) break;
+
+      const tag = bytes[index];
+      const length = bytes[index + 1];
+
+      if (index + 2 + length > bytes.length) break;
+
+      const value = bytes.slice(index + 2, index + 2 + length);
+      const valueStr = new TextDecoder("utf-8").decode(value);
+
+      fields[tag] = {
+        name: fieldNames[tag] || `Field ${tag}`,
+        value: valueStr,
+        tag: tag,
+      };
+
+      index += 2 + length;
+    }
+
+    return fields;
+  } catch (error) {
+    console.error("Error parsing TLV:", error);
+    return {};
+  }
+}
