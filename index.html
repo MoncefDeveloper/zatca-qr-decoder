@@ -143,9 +143,7 @@
               data-i18n-placeholder="inputPlaceholder"
               placeholder="Paste your ZATCA QR code data here..."
               spellcheck="false"
-            >
-AQpNb25jZWYgRGV2CgAxMjM0NTY3ODkwEzIwMjMtMDEtMDFUMTI6MDA6MDAEBjEwMC4wMAUEMTUuMDA=</textarea
-            >
+            ></textarea>
           </div>
 
           <button class="decode-button" onclick="decodeQR()">
@@ -169,6 +167,7 @@ AQpNb25jZWYgRGV2CgAxMjM0NTY3ODkwEzIwMjMtMDEtMDFUMTI6MDA6MDAEBjEwMC4wMAUEMTUuMDA=
 
           <div id="loadingState" class="loading">
             <div class="spinner"></div>
+            <p class="loading-text">Decoding QR code...</p>
           </div>
 
           <div id="skeletonState" class="skeleton-state" style="display: none">
@@ -232,17 +231,10 @@ AQpNb25jZWYgRGV2CgAxMjM0NTY3ODkwEzIwMjMtMDEtMDFUMTI6MDA6MDAEBjEwMC4wMAUEMTUuMDA=
         </div>
       </div>
 
-      <footer
-        style="
-          text-align: center;
-          padding: 40px 20px;
-          margin-top: 60px;
-          border-top: 1px solid var(--border-color);
-        "
-      >
-        <p style="color: var(--text-secondary); font-size: 0.9rem">
+      <footer>
+        <p>
           <span data-i18n="footer">Created with ❤️ by</span>
-          <strong style="color: #667eea">
+          <strong>
             <a href="https://moncefdev.me/" target="_blank">MoncefDev</a>
           </strong>
         </p>
@@ -351,7 +343,10 @@ AQpNb25jZWYgRGV2CgAxMjM0NTY3ODkwEzIwMjMtMDEtMDFUMTI6MDA6MDAEBjEwMC4wMAUEMTUuMDA=
     </div>
 
     <!-- Success Animation -->
-    <div class="success-animation" id="successAnimation">✓</div>
+    <div class="success-animation" id="successAnimation">
+      <div class="success-icon">✓</div>
+      <div class="success-text">QR Code Decoded Successfully!</div>
+    </div>
 
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>

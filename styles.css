@@ -804,6 +804,7 @@ body {
 /* Loading spinner */
 .loading {
     display: none;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 200px;
@@ -811,6 +812,12 @@ body {
 
 .loading.active {
     display: flex;
+}
+
+.loading-text {
+    margin-top: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
 }
 
 .spinner {
@@ -965,6 +972,7 @@ body {
 .export-btn:hover {
     background: var(--input-focus);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* History section */
@@ -1203,11 +1211,26 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 100px;
-    color: var(--success-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     pointer-events: none;
     z-index: 999;
+}
+
+.success-icon {
+    font-size: 100px;
+    color: var(--success-text);
+    margin-bottom: 16px;
+}
+
+.success-text {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
 }
 
 .success-animation.show {
@@ -1215,8 +1238,39 @@ body {
     animation: successBurst 1s ease;
 }
 
+@-webkit-keyframes successBurst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
 
-/* Add these styles to the existing styles.css */
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+}
+
+@keyframes successBurst {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+}
 
 /* Shortcuts modal styles */
 .shortcuts-modal {
@@ -1332,83 +1386,6 @@ body {
     font-style: italic;
 }
 
-/* Remove the old shortcuts-hint styles */
-.shortcuts-hint {
-    display: none !important;
-}
-
-/* RTL support for shortcuts modal */
-
-
-@-webkit-keyframes successBurst {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-    }
-
-    50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.5);
-    }
-}
-
-@keyframes successBurst {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-    }
-
-    50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.5);
-    }
-}
-
-/* Keyboard shortcuts hint */
-.shortcuts-hint {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px;
-    font-size: 14px;
-    color: var(--text-secondary);
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-}
-
-.shortcuts-hint:hover {
-    opacity: 1;
-}
-
-.shortcut {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.shortcut-key {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-}
-
 /* Toast notification */
 .toast {
     position: fixed;
@@ -1481,10 +1458,6 @@ body {
     margin-left: 4px;
 }
 
-.shortcuts-hint {
-    display: none !important;
-}
-
 @-webkit-keyframes slideInRight {
     from {
         transform: translateX(100%);
@@ -1533,6 +1506,29 @@ body {
     }
 }
 
+/* Footer styles */
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    margin-top: 60px;
+    border-top: 1px solid var(--border-color);
+}
+
+footer p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+footer a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
 /* RTL support */
 [dir="rtl"] .header-controls {
     right: auto;
@@ -1554,11 +1550,6 @@ body {
 
 [dir="rtl"] .history-item {
     flex-direction: row-reverse;
-}
-
-[dir="rtl"] .shortcuts-hint {
-    right: auto;
-    left: 20px;
 }
 
 [dir="rtl"] .toast {
@@ -1626,8 +1617,21 @@ body {
         flex-direction: column;
     }
 
-    .shortcuts-hint {
-        display: none;
+    .header-controls {
+        position: static;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .tutorial-content, .shortcuts-content {
+        padding: 24px;
+        width: 95%;
+    }
+
+    .tooltip .tooltiptext {
+        width: 150px;
+        margin-left: -75px;
+        font-size: 12px;
     }
 }
 
